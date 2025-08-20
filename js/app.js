@@ -124,14 +124,6 @@ async function loadHighlightsJSON(url = 'data/highlights.json') {
       out.innerHTML = '';
       out.appendChild(outImg);
 
-      const dl = document.createElement('a');
-      dl.textContent = 'Download PNG';
-      dl.download = 'california-counties.png';
-      dl.href = pngURL;
-      dl.style.display = 'inline-block';
-      dl.style.marginTop = '8px';
-      out.appendChild(dl);
-
       window.addEventListener('unload', () => URL.revokeObjectURL(pngURL));
       map.remove(); mapEl.remove();
       log('Done.', 'ok');
