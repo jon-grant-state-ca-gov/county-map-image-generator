@@ -42,7 +42,7 @@ async function loadHighlightsJSON(url = 'data/highlights.json') {
   log('Map created', 'ok');
 
   // Fetch GeoJSON
-  const urlJSON = 'data/california-counties.geojson';
+  const urlJSON = 'data/california-counties-simplified.geojson';
   let data;
   try {
     const resp = await fetch(urlJSON, { cache:'no-cache' });
