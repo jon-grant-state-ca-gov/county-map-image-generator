@@ -72,8 +72,8 @@ async function loadHighlightsJSON(url = 'data/highlights.json') {
       const key = countyName(feature.properties).toLowerCase().trim();
       const hiColor = highlightMap && highlightMap.get(key);
       return hiColor
-        ? { color:'#000', weight:3, fillColor: hiColor,  fillOpacity:1 }
-        : { color:'#000', weight:2, fillColor:'#bdbdbd', fillOpacity:1 };
+        ? { color:'#D4D4D7', weight:6, fillColor: hiColor,  fillOpacity:1 }
+        : { color:'#D4D4D7', weight:6, fillColor:'#FDF5ED', fillOpacity:1 };
     }
   }).addTo(map);
   log(`Layers added: ${layer.getLayers().length}`, 'ok');
@@ -108,7 +108,7 @@ async function loadHighlightsJSON(url = 'data/highlights.json') {
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#e6f2ff';
+    ctx.fillStyle = '#FAFAFA';
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(img, 0, 0);
     URL.revokeObjectURL(url);
