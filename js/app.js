@@ -1,4 +1,10 @@
 // --- helpers -------------------------------------------------------------
+
+/**
+ * Log a message to the #output element and the console.
+ * @param {string} msg - The message to display.
+ * @param {string} [cls] - Optional CSS class (e.g. "ok" or "err") for styling.
+ */
 const log = (msg, cls='') => {
   const p = document.createElement('div');
   if (cls) p.className = cls;
@@ -7,12 +13,22 @@ const log = (msg, cls='') => {
   console.log(msg);
 };
 
+/**
+ * Extract a county name from feature properties, supporting multiple schemas.
+ * @param {Object} props - The GeoJSON feature properties object.
+ * @returns {string} - The county name (empty string if none found).
+ */
 const countyName = (props) =>
   props.NAME || props.Name || props.name ||
   props.COUNTY || props.COUNTY_NAME || props.county ||
   props.NAMELSAD || props.NAMELSAD20 || "";
 
-// Load highlights.json (map of name -> color)
+/**
+ * Load highlight colors from a JSON file.
+ * Expected format: { "County Name": "#hexColor", ... }
+ * @param {string} [url='data/highlights.json'] - Path to highlights JSON file.
+ * @returns {Promise<Map<string,string>|null>} - A Map of lowercase county names to colors, or null if load fails.
+ */
 async function loadHighlightsJSON(url = 'data/highlights.json') {
   try {
     const resp = await fetch(url, { cache: 'no-cache' });
@@ -30,6 +46,16 @@ async function loadHighlightsJSON(url = 'data/highlights.json') {
 }
 
 // --- main ---------------------------------------------------------------
+
+/**
+ * Main script entrypoint:
+ *  - Initializes hidden Leaflet map
+ *  - Loads counties GeoJSON
+ *  - Loads highlights JSON (optional)
+ *  - Renders counties with styles
+ *  - Fits map bounds to highlighted counties (or all)
+ *  - Exports the Leaflet-rendered SVG to PNG and displays it
+ */
 (async function main(){
   const out = document.getElementById('output');
   out.textContent = 'Starting…';
@@ -37,12 +63,13 @@ async function loadHighlightsJSON(url = 'data/highlights.json') {
   if (!window.L) { log('Leaflet failed to load.', 'err'); return; }
   log('Libraries OK', 'ok');
 
+  // Create hidden Leaflet map
   const mapEl = document.getElementById('map');
   const map = L.map(mapEl, { zoomControl:false, attributionControl:false }).setView([37.5,-119.5], 6);
   log('Map created', 'ok');
 
   // Fetch GeoJSON
-  const urlJSON = 'data/california-counties.geojson';
+  const urlJSON = 'data/california-counties-simplified.geojson';
   let data;
   try {
     const resp = await fetch(urlJSON, { cache:'no-cache' });
@@ -68,6 +95,11 @@ async function loadHighlightsJSON(url = 'data/highlights.json') {
   // Create counties layer with dynamic styling
   const layer = L.geoJSON(data, {
     renderer,
+    /**
+     * Style function applied to each county feature.
+     * @param {GeoJSON.Feature} feature - A single county feature.
+     * @returns {Object} - Style options for the feature.
+     */
     style: (feature) => {
       const key = countyName(feature.properties).toLowerCase().trim();
       const hiColor = highlightMap && highlightMap.get(key);
@@ -89,10 +121,12 @@ async function loadHighlightsJSON(url = 'data/highlights.json') {
 
   map.fitBounds(targetBounds, { padding: [16, 16] });
 
+  // Wait for rendering to complete
   await new Promise(r => map.once('moveend', r));
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-  // Export: SVG → PNG
+  // --- Export: SVG → PNG ------------------------------------------------
+
   const svg = map.getPanes().overlayPane.querySelector('svg');
   if (!svg) { out.textContent = 'No SVG overlay found.'; return; }
 
@@ -124,17 +158,9 @@ async function loadHighlightsJSON(url = 'data/highlights.json') {
       out.innerHTML = '';
       out.appendChild(outImg);
 
-      const dl = document.createElement('a');
-      dl.textContent = 'Download PNG';
-      dl.download = 'california-counties.png';
-      dl.href = pngURL;
-      dl.style.display = 'inline-block';
-      dl.style.marginTop = '8px';
-      out.appendChild(dl);
-
       window.addEventListener('unload', () => URL.revokeObjectURL(pngURL));
       map.remove(); mapEl.remove();
-      log('Done.', 'ok');
+      // log('Done.', 'ok');
     }, 'image/png');
   };
   img.onerror = () => { out.textContent = 'Failed to rasterize SVG.'; };
